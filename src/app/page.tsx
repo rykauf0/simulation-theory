@@ -45,15 +45,15 @@ export default function HomePage() {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <pre className="text-[var(--matrix-green)] text-glow text-xs sm:text-sm mb-4 leading-tight">{`
- ███████╗██╗███╗   ███╗██╗   ██╗██╗      █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
- ██╔════╝██║████╗ ████║██║   ██║██║     ██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
- ███████╗██║██╔████╔██║██║   ██║██║     ███████║   ██║   ██║██║   ██║██╔██╗ ██║
- ╚════██║██║██║╚██╔╝██║██║   ██║██║     ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
- ███████║██║██║ ╚═╝ ██║╚██████╔╝███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
- ╚══════╝╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝`}</pre>
+          <pre className="text-[var(--matrix-green)] text-glow text-xs sm:text-sm mb-4 leading-tight overflow-hidden max-w-full">{`
+ ███████╗██╗███╗   ███╗
+ ██╔════╝██║████╗ ████║
+ ███████╗██║██╔████╔██║
+ ╚════██║██║██║╚██╔╝██║
+ ███████║██║██║ ╚═╝ ██║
+ ╚══════╝╚═╝╚═╝     ╚═╝`}</pre>
           <p className="text-[var(--matrix-green)] text-glow text-xs tracking-[0.3em] uppercase">
-            Theory
+            Simulation Theory
           </p>
           <div className="mt-8 text-[var(--text-dim)] text-xs">
             <span className="cursor-blink">█</span> Initializing neural network...

@@ -89,7 +89,9 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   updateAgent: (agentId, update) =>
     set((state) => ({
       agents: state.agents.map((a) =>
-        a.agentId === agentId ? { ...a, ...update } : a
+        (a.agentId === agentId || a.role === agentId || (a.agentId === '' && update.role && a.role === update.role))
+          ? { ...a, ...update }
+          : a
       ),
     })),
 

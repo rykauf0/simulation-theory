@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import type { ClientMessage, ServerMessage } from '@/types/ws-messages';
+import type { ServerMessage } from '@/types/ws-messages';
 import { useSimulationStore } from '@/stores/simulation-store';
 
 export function useSimulationWs() {
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const {
     setSimulation,
@@ -19,38 +17,6 @@ export function useSimulationWs() {
     setSummary,
     addLogEntry,
   } = useSimulationStore();
-
-  const connect = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      reconnectAttempts.current = 0;
-      addLogEntry({ text: 'Connected to simulation server', type: 'system' });
-    };
-
-    ws.onclose = () => {
-      addLogEntry({ text: 'Disconnected from server', type: 'warning' });
-      if (reconnectAttempts.current < maxReconnectAttempts) {
-        const delay = Math.pow(2, reconnectAttempts.current) * 1000;
-        reconnectAttempts.current++;
-        setTimeout(connect, delay);
-      }
-    };
-
-    ws.onerror = () => {
-      addLogEntry({ text: 'WebSocket error', type: 'error' });
-    };
-
-    ws.onmessage = (event) => {
-      const message: ServerMessage = JSON.parse(event.data);
-      handleMessage(message);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleMessage = useCallback((message: ServerMessage) => {
     switch (message.type) {
@@ -133,55 +99,131 @@ export function useSimulationWs() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const send = useCallback((message: ClientMessage) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
+  const connectSSE = useCallback((simulationId: string) => {
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
     }
-  }, []);
+
+    addLogEntry({ text: 'Connecting to simulation server...', type: 'system' });
+
+    const es = new EventSource(`/api/simulation/${simulationId}/stream`);
+    eventSourceRef.current = es;
+
+    // Handle all SSE event types
+    const eventTypes = [
+      'simulation_created',
+      'simulation_state',
+      'agent_started',
+      'agent_complete',
+      'organism_update',
+      'round_complete',
+      'simulation_complete',
+      'error',
+    ];
+
+    for (const eventType of eventTypes) {
+      es.addEventListener(eventType, (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+
+          // simulation_state is a special SSE-only event for pre-completed sims
+          if (eventType === 'simulation_state') {
+            if (payload.status) setStatus(payload.status);
+            if (payload.organismState) setOrganismState(payload.organismState);
+            if (payload.rounds) {
+              for (const round of payload.rounds) {
+                addRound(round);
+              }
+            }
+            return;
+          }
+
+          handleMessage({ type: eventType, payload } as ServerMessage);
+        } catch {
+          // Ignore parse errors
+        }
+      });
+    }
+
+    es.onopen = () => {
+      addLogEntry({ text: 'Connected to simulation server', type: 'system' });
+    };
+
+    es.onerror = () => {
+      // EventSource auto-reconnects, but if the stream is done this fires
+      if (es.readyState === EventSource.CLOSED) {
+        addLogEntry({ text: 'Stream closed', type: 'system' });
+      }
+    };
+
+    return es;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleMessage]);
 
   const startSimulation = useCallback(
-    (companyName: string, context: string) => {
+    async (companyName: string, context: string) => {
       setSimulation('pending', companyName, context);
       addLogEntry({ text: `Initializing simulation for "${companyName}"...`, type: 'system' });
-      send({
-        type: 'start_simulation',
-        payload: { companyName, context },
+
+      // Create simulation via REST API
+      const res = await fetch('/api/simulation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName, context }),
       });
+      const data = await res.json();
+      const simulationId = data.simulationId;
+
+      // Connect SSE to stream events
+      connectSSE(simulationId);
+
+      return simulationId;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [send]
+    [connectSSE]
   );
 
   const injectEvent = useCallback(
-    (simulationId: string, event: string) => {
+    async (simulationId: string, event: string) => {
       addLogEntry({ text: `Injecting event: "${event}"`, type: 'warning' });
-      send({
-        type: 'inject_event',
-        payload: { simulationId, event },
+      await fetch(`/api/simulation/${simulationId}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event }),
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [send]
+    []
   );
 
   const requestSummary = useCallback(
-    (simulationId: string) => {
+    async (simulationId: string) => {
       addLogEntry({ text: 'Generating executive briefing...', type: 'info' });
-      send({
-        type: 'request_summary',
-        payload: { simulationId },
-      });
+      try {
+        const res = await fetch(`/api/simulation/${simulationId}/summary`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.summary) {
+          setSummary(data.summary);
+          addLogEntry({ text: 'Executive briefing generated', type: 'info' });
+        }
+      } catch {
+        addLogEntry({ text: 'Failed to generate briefing', type: 'error' });
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [send]
+    []
   );
 
+  // Clean up on unmount
   useEffect(() => {
-    connect();
     return () => {
-      wsRef.current?.close();
+      eventSourceRef.current?.close();
     };
-  }, [connect]);
+  }, []);
 
-  return { send, startSimulation, injectEvent, requestSummary };
+  return { startSimulation, connectSSE, injectEvent, requestSummary };
 }

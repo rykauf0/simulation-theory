@@ -50,7 +50,7 @@ export function Sidebar({ agents, status, organismState, onInjectEvent, onReques
   };
 
   return (
-    <div className="w-[250px] border-r border-[var(--border-color)] bg-[var(--bg-panel)] flex flex-col overflow-hidden">
+    <div className="w-[250px] h-full border-r border-[var(--border-color)] bg-[var(--bg-panel)] flex flex-col overflow-hidden">
       {/* Agents section */}
       <div className="p-3 border-b border-[var(--border-color)]">
         <div className="text-[var(--text-dim)] text-xs mb-3 tracking-wider">

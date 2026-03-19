@@ -10,9 +10,9 @@ export function StatusBar() {
   const healthPct = Math.round(organismState.health * 100);
 
   return (
-    <div className="px-4 py-1.5 border-t border-[var(--border-color)] bg-[var(--bg-panel)] flex items-center justify-between text-xs">
-      <div className="flex items-center gap-4">
-        <span className="text-[var(--text-muted)]">░░░ SIMULATION THEORY ░░░</span>
+    <div className="px-3 sm:px-4 py-1.5 border-t border-[var(--border-color)] bg-[var(--bg-panel)] flex items-center justify-between text-xs">
+      <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
+        <span className="text-[var(--text-muted)] hidden sm:inline">░░░ SIMULATION THEORY ░░░</span>
         <span className="text-[var(--text-dim)]">
           agents: <span className="text-[var(--matrix-green)]">{completedAgents}/{totalAgents}</span>
         </span>
@@ -27,7 +27,7 @@ export function StatusBar() {
           }}>{healthPct}/100</span>
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         <span className={`${
           status === 'running' ? 'text-[var(--matrix-green)] pulse-active' :
           status === 'completed' ? 'text-[var(--cyan-info)]' :
