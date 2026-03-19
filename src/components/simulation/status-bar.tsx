@@ -10,17 +10,17 @@ export function StatusBar() {
   const healthPct = Math.round(organismState.health * 100);
 
   return (
-    <div className="px-3 sm:px-4 py-1.5 border-t border-[var(--border-color)] bg-[var(--bg-panel)] flex items-center justify-between text-xs">
-      <div className="flex items-center gap-2 sm:gap-4 overflow-hidden">
-        <span className="text-[var(--text-muted)] hidden sm:inline">░░░ SIMULATION THEORY ░░░</span>
-        <span className="text-[var(--text-dim)]">
+    <div className="px-2 sm:px-4 py-1.5 border-t border-[var(--border-color)] bg-[var(--bg-panel)] flex items-center justify-between text-[10px] sm:text-xs min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 overflow-hidden min-w-0">
+        <span className="text-[var(--text-muted)] hidden sm:inline shrink-0">░░░ SIMULATION THEORY ░░░</span>
+        <span className="text-[var(--text-dim)] shrink-0">
           agents: <span className="text-[var(--matrix-green)]">{completedAgents}/{totalAgents}</span>
         </span>
-        <span className="text-[var(--text-dim)]">
-          round: <span className="text-[var(--matrix-green)]">{currentRound || 1}</span>
+        <span className="text-[var(--text-dim)] shrink-0">
+          r: <span className="text-[var(--matrix-green)]">{currentRound || 1}</span>
         </span>
-        <span className="text-[var(--text-dim)]">
-          health: <span style={{
+        <span className="text-[var(--text-dim)] shrink-0">
+          hp: <span style={{
             color: healthPct > 65 ? 'var(--matrix-green)' :
                    healthPct > 35 ? 'var(--amber-warning)' :
                    'var(--critical-red)'

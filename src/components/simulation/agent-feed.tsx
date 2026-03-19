@@ -51,8 +51,8 @@ export function AgentFeed() {
           </div>
         ) : (
           logEntries.map((entry) => (
-            <div key={entry.id} className="text-xs flex gap-2 leading-relaxed">
-              <span className="text-[var(--text-muted)] shrink-0 w-[72px]">
+            <div key={entry.id} className="text-xs flex gap-2 leading-relaxed min-w-0">
+              <span className="text-[var(--text-muted)] shrink-0 w-[56px] sm:w-[72px]">
                 {formatTime(entry.timestamp)}
               </span>
               <span style={{ color: TYPE_COLORS[entry.type] }} className="shrink-0">
@@ -60,7 +60,7 @@ export function AgentFeed() {
               </span>
               <span
                 style={{ color: TYPE_COLORS[entry.type] }}
-                className={entry.type === 'system' ? '' : ''}
+                className="break-words min-w-0"
               >
                 {entry.text}
               </span>

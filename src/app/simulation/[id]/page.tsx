@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useSimulationStore } from '@/stores/simulation-store';
 import { useSimulationWs } from '@/hooks/use-simulation-ws';
@@ -18,6 +18,7 @@ const OrganismCanvas = dynamic(
 
 export default function SimulationPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { connectSSE, injectEvent, requestSummary } = useSimulationWs();
   const { status, companyName, showSummary, agents, organismState } = useSimulationStore();
   const [loaded, setLoaded] = useState(false);
@@ -25,6 +26,10 @@ export default function SimulationPage() {
 
   // Load simulation data on mount and connect SSE
   useEffect(() => {
+    // Read creation params from URL (needed for serverless where in-memory store is lost)
+    const urlCompanyName = searchParams.get('companyName') || '';
+    const urlContext = searchParams.get('context') || '';
+
     async function loadSimulation() {
       try {
         const res = await fetch(`/api/simulation/${id}`);
@@ -41,8 +46,14 @@ export default function SimulationPage() {
         // Will rely on SSE for updates
       }
 
-      // Connect SSE stream for real-time updates
-      connectSSE(id);
+      // If we have creation params from URL, set them in the store
+      if (urlCompanyName) {
+        useSimulationStore.getState().setSimulation(id, urlCompanyName, urlContext);
+      }
+
+      // Connect SSE stream, passing creation params so the stream route
+      // can recreate the simulation if the in-memory store is empty
+      connectSSE(id, urlCompanyName || undefined, urlContext || undefined);
       setLoaded(true);
     }
     loadSimulation();
@@ -127,11 +138,11 @@ export default function SimulationPage() {
           <div className="flex-[2] relative border-b border-[var(--border-color)] min-h-[200px]">
             <OrganismCanvas />
             {/* Viewport overlay label */}
-            <div className="absolute top-2 left-3 text-[var(--text-muted)] text-xs">
+            <div className="absolute top-2 left-2 sm:left-3 text-[var(--text-muted)] text-[10px] sm:text-xs truncate max-w-[calc(100%-1rem)]">
               ┌─ NEURAL NETWORK VIEWPORT ─┐
             </div>
-            <div className="absolute bottom-2 right-3 text-[var(--text-muted)] text-xs">
-              Health: {Math.round(organismState.health * 100)}/100
+            <div className="absolute bottom-2 right-2 sm:right-3 text-[var(--text-muted)] text-[10px] sm:text-xs">
+              HP: {Math.round(organismState.health * 100)}/100
             </div>
           </div>
 

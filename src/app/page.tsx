@@ -35,7 +35,8 @@ export default function HomePage() {
       });
 
       const data = await res.json();
-      router.push(`/simulation/${data.simulationId}`);
+      const params = new URLSearchParams({ companyName, context: fullContext });
+      router.push(`/simulation/${data.simulationId}?${params.toString()}`);
     } catch {
       setIsLoading(false);
     }
