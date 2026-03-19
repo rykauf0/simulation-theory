@@ -44,7 +44,7 @@ function handleClientMessage(ws: WebSocket, message: ClientMessage) {
       const defaultConfig = {
         agentCount: 6,
         roundCount: 1,
-        model: 'claude-sonnet-4-20250514',
+        model: 'gemini-2.0-flash',
         enabledRoles: [
           'market_analyst',
           'financial_analyst',
@@ -189,7 +189,7 @@ function startOrchestrator(simulationId: string) {
 
 async function handleSummaryRequest(ws: WebSocket, simulationId: string) {
   try {
-    const { callClaude } = require('@/lib/anthropic');
+    const { callLLM } = require('@/lib/gemini');
     const sim = getSimulation(simulationId);
     if (!sim || sim.rounds.length === 0) {
       sendToClient(ws, {
@@ -203,7 +203,7 @@ async function handleSummaryRequest(ws: WebSocket, simulationId: string) {
     const systemPrompt = 'You are an executive briefing generator. Be direct, specific, and actionable.';
     const userPrompt = `Generate an executive briefing for ${sim.companyName}.\n\nOverall Health: ${latestRound.consensus.overallHealth}/100\nScores: ${JSON.stringify(latestRound.consensus.dimensionScores)}\nTop Risks: ${JSON.stringify(latestRound.consensus.topRisks.slice(0, 3))}\nTop Opportunities: ${JSON.stringify(latestRound.consensus.topOpportunities.slice(0, 3))}`;
 
-    const summary = await callClaude(systemPrompt, userPrompt);
+    const summary = await callLLM(systemPrompt, userPrompt);
     sendToClient(ws, {
       type: 'summary_ready',
       payload: { simulationId, summary },

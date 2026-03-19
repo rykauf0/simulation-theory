@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { callClaude } from '@/lib/anthropic';
+import { callLLM } from '@/lib/gemini';
 import { AGENT_ROLES } from './agent-roles';
 import { buildScenarioPrompt } from './scenario-builder';
 import type {
@@ -82,7 +82,7 @@ export async function executeAgent(
   );
 
   try {
-    const responseText = await callClaude(agentDef.systemPrompt, userPrompt);
+    const responseText = await callLLM(agentDef.systemPrompt, userPrompt);
     const parsed = parseAgentResponse(responseText);
     const durationMs = Date.now() - startTime;
 

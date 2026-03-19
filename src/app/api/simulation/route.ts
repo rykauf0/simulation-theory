@@ -7,7 +7,7 @@ import type { AgentRole, SimulationConfig } from '@/types/simulation';
 const DEFAULT_CONFIG: SimulationConfig = {
   agentCount: 6,
   roundCount: 1,
-  model: 'claude-sonnet-4-20250514',
+  model: 'gemini-2.0-flash',
   enabledRoles: [
     'market_analyst',
     'financial_analyst',

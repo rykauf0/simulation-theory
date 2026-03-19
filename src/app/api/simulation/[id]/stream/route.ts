@@ -13,7 +13,7 @@ export function getOrchestrator(id: string) {
 const DEFAULT_CONFIG: SimulationConfig = {
   agentCount: 6,
   roundCount: 1,
-  model: 'claude-sonnet-4-20250514',
+  model: 'gemini-2.0-flash',
   enabledRoles: [
     'market_analyst',
     'financial_analyst',
@@ -66,14 +66,14 @@ export async function GET(
       }
 
       // Check for API key before starting
-      if (!process.env.ANTHROPIC_API_KEY) {
+      if (!process.env.GEMINI_API_KEY) {
         send('simulation_created', {
           simulationId: id,
           config: simulation.config,
         });
         send('error', {
           simulationId: id,
-          message: 'ANTHROPIC_API_KEY is not set. Add it in Vercel → Settings → Environment Variables, then redeploy.',
+          message: 'GEMINI_API_KEY is not set. Add it in Vercel → Settings → Environment Variables, then redeploy.',
           code: 'MISSING_API_KEY',
         });
         controller.close();

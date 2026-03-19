@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSimulation } from '@/lib/simulation-store';
-import { callClaude } from '@/lib/anthropic';
+import { callLLM } from '@/lib/gemini';
 
 export async function POST(
   request: Request,
@@ -53,7 +53,7 @@ Format your response as an executive briefing with these sections:
 7. KEY METRICS TO TRACK`;
 
   try {
-    const summary = await callClaude(systemPrompt, userPrompt);
+    const summary = await callLLM(systemPrompt, userPrompt);
     return NextResponse.json({ summary });
   } catch (error) {
     return NextResponse.json(
