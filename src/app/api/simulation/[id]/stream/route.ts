@@ -24,7 +24,7 @@ const DEFAULT_CONFIG: SimulationConfig = {
   ] as AgentRole[],
 };
 
-export const maxDuration = 300; // Vercel Pro: 5 min max
+export const maxDuration = 60; // Vercel Hobby: 60s max
 
 export async function GET(
   request: Request,
@@ -63,6 +63,21 @@ export async function GET(
         } catch {
           // Stream may be closed
         }
+      }
+
+      // Check for API key before starting
+      if (!process.env.ANTHROPIC_API_KEY) {
+        send('simulation_created', {
+          simulationId: id,
+          config: simulation.config,
+        });
+        send('error', {
+          simulationId: id,
+          message: 'ANTHROPIC_API_KEY is not set. Add it in Vercel → Settings → Environment Variables, then redeploy.',
+          code: 'MISSING_API_KEY',
+        });
+        controller.close();
+        return;
       }
 
       // Send initial simulation state

@@ -6,6 +6,7 @@ import { useSimulationStore } from '@/stores/simulation-store';
 
 export function useSimulationWs() {
   const eventSourceRef = useRef<EventSource | null>(null);
+  const simulationDoneRef = useRef(false);
 
   const {
     setSimulation,
@@ -52,14 +53,22 @@ export function useSimulationWs() {
 
       case 'agent_complete': {
         const { agentId, result } = message.payload;
-        updateAgent(agentId, { status: 'complete', result });
-        const healthPct = Math.round(
-          Object.values(result.scores).reduce((a, b) => a + b, 0) / 6
-        );
-        addLogEntry({
-          text: `[${result.role.toUpperCase().replace('_', ' ')}] Analysis complete — health: ${healthPct}/100, confidence: ${(result.confidence * 100).toFixed(0)}%`,
-          type: 'success',
-        });
+        updateAgent(agentId, { status: result.status === 'error' ? 'error' : 'complete', result });
+
+        if (result.status === 'error') {
+          addLogEntry({
+            text: `[${result.role.toUpperCase().replace('_', ' ')}] FAILED: ${result.analysis}`,
+            type: 'error',
+          });
+        } else {
+          const healthPct = Math.round(
+            Object.values(result.scores).reduce((a, b) => a + b, 0) / 6
+          );
+          addLogEntry({
+            text: `[${result.role.toUpperCase().replace('_', ' ')}] Analysis complete — health: ${healthPct}/100, confidence: ${(result.confidence * 100).toFixed(0)}%`,
+            type: 'success',
+          });
+        }
         break;
       }
 
@@ -105,6 +114,9 @@ export function useSimulationWs() {
       eventSourceRef.current.close();
     }
 
+    // Reset done flag for new simulation
+    simulationDoneRef.current = false;
+
     addLogEntry({ text: 'Connecting to simulation server...', type: 'system' });
 
     // Pass creation params so the stream route can re-create the simulation
@@ -145,6 +157,11 @@ export function useSimulationWs() {
             return;
           }
 
+          // When simulation completes or errors, mark as done so we don't reconnect
+          if (eventType === 'simulation_complete' || eventType === 'error') {
+            simulationDoneRef.current = true;
+          }
+
           handleMessage({ type: eventType, payload } as ServerMessage);
         } catch {
           // Ignore parse errors
@@ -157,8 +174,11 @@ export function useSimulationWs() {
     };
 
     es.onerror = () => {
-      // EventSource auto-reconnects, but if the stream is done this fires
-      if (es.readyState === EventSource.CLOSED) {
+      // EventSource auto-reconnects by default. We must close it
+      // explicitly when the simulation is done, otherwise it loops
+      // forever on serverless (each reconnect creates a new simulation).
+      if (simulationDoneRef.current || es.readyState === EventSource.CLOSED) {
+        es.close();
         addLogEntry({ text: 'Stream closed', type: 'system' });
       }
     };

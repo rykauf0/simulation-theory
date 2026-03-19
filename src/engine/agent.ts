@@ -40,7 +40,7 @@ function parseAgentResponse(raw: string): {
   };
 }
 
-function defaultResult(role: AgentRole, agentId: string, durationMs: number): AgentResult {
+function defaultResult(role: AgentRole, agentId: string, durationMs: number, errorMsg?: string): AgentResult {
   return {
     agentId,
     role,
@@ -53,7 +53,7 @@ function defaultResult(role: AgentRole, agentId: string, durationMs: number): Ag
       innovation: 50,
       resilience: 50,
     },
-    analysis: 'Unable to parse agent response. Returning default scores.',
+    analysis: errorMsg || 'Unable to parse agent response. Returning default scores.',
     risks: [],
     opportunities: [],
     keyMetrics: [],
@@ -101,7 +101,8 @@ export async function executeAgent(
     };
   } catch (error) {
     const durationMs = Date.now() - startTime;
-    console.error(`Agent ${role} (${agentId}) failed:`, error);
-    return defaultResult(role, agentId, durationMs);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`Agent ${role} (${agentId}) failed:`, errorMsg);
+    return defaultResult(role, agentId, durationMs, `Agent error: ${errorMsg}`);
   }
 }
