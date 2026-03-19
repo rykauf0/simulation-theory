@@ -1,6 +1,6 @@
-import { getSimulation } from '@/lib/simulation-store';
+import { getSimulation, createSimulation } from '@/lib/simulation-store';
 import { SimulationOrchestrator } from '@/engine/orchestrator';
-import type { AgentResult, AgentRole } from '@/types/simulation';
+import type { AgentResult, AgentRole, SimulationConfig } from '@/types/simulation';
 import type { OrganismState } from '@/types/organism';
 
 // Track active orchestrators so inject/pause can reach them
@@ -10,14 +10,40 @@ export function getOrchestrator(id: string) {
   return activeOrchestrators.get(id);
 }
 
+const DEFAULT_CONFIG: SimulationConfig = {
+  agentCount: 6,
+  roundCount: 1,
+  model: 'claude-sonnet-4-20250514',
+  enabledRoles: [
+    'market_analyst',
+    'financial_analyst',
+    'geopolitical_risk',
+    'supply_chain',
+    'talent_culture',
+    'technology',
+  ] as AgentRole[],
+};
+
 export const maxDuration = 300; // Vercel Pro: 5 min max
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const simulation = getSimulation(id);
+  let simulation = getSimulation(id);
+
+  // On serverless platforms, the in-memory store may not persist between
+  // the POST that created the simulation and this GET request.
+  // Re-create from query params if needed.
+  if (!simulation) {
+    const url = new URL(request.url);
+    const companyName = url.searchParams.get('companyName');
+    const context = url.searchParams.get('context') || '';
+    if (companyName) {
+      simulation = createSimulation(id, companyName, context, DEFAULT_CONFIG);
+    }
+  }
 
   if (!simulation) {
     return new Response(JSON.stringify({ error: 'Simulation not found' }), {

@@ -99,7 +99,7 @@ export function useSimulationWs() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const connectSSE = useCallback((simulationId: string) => {
+  const connectSSE = useCallback((simulationId: string, companyName?: string, context?: string) => {
     // Close existing connection
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -107,7 +107,13 @@ export function useSimulationWs() {
 
     addLogEntry({ text: 'Connecting to simulation server...', type: 'system' });
 
-    const es = new EventSource(`/api/simulation/${simulationId}/stream`);
+    // Pass creation params so the stream route can re-create the simulation
+    // if the in-memory store was lost between serverless invocations.
+    const params = new URLSearchParams();
+    if (companyName) params.set('companyName', companyName);
+    if (context) params.set('context', context);
+    const qs = params.toString();
+    const es = new EventSource(`/api/simulation/${simulationId}/stream${qs ? `?${qs}` : ''}`);
     eventSourceRef.current = es;
 
     // Handle all SSE event types
@@ -175,8 +181,8 @@ export function useSimulationWs() {
       const data = await res.json();
       const simulationId = data.simulationId;
 
-      // Connect SSE to stream events
-      connectSSE(simulationId);
+      // Connect SSE to stream events, passing creation params as fallback
+      connectSSE(simulationId, companyName, context);
 
       return simulationId;
     },
