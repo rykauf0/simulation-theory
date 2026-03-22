@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 
 export const metadata: Metadata = {
-  title: "SpeakBuddy — AI Speech Therapy Practice for Kids",
+  title: "Heliograph — Brand, PR & Marketing Agency",
   description:
-    "Fun, AI-powered speech therapy practice at home. Your child says the word, our AI listens and gives instant, kid-friendly feedback. Free starter packs included!",
+    "A modern brand, PR & marketing agency that combines strategic thinking with cutting-edge AI to deliver exceptional results, faster. We illuminate brands.",
 };
 
 export default function RootLayout({
@@ -16,11 +18,15 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Navbar />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }

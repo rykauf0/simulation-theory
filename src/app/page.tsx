@@ -1,15 +1,17 @@
-import { LandingHero } from "@/components/landing/hero";
-import { LandingFeatures } from "@/components/landing/features";
-import { LandingPricing } from "@/components/landing/pricing";
-import { LandingFooter } from "@/components/landing/footer";
+import { Hero } from "@/components/sections/hero";
+import { Capabilities } from "@/components/sections/capabilities";
+import { Process } from "@/components/sections/process";
+import { SelectedWork } from "@/components/sections/selected-work";
+import { CTA } from "@/components/sections/cta";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      <LandingHero />
-      <LandingFeatures />
-      <LandingPricing />
-      <LandingFooter />
+    <main>
+      <Hero />
+      <Capabilities />
+      <Process />
+      <SelectedWork />
+      <CTA />
     </main>
   );
 }
